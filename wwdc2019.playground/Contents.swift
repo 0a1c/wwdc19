@@ -9,20 +9,19 @@ class VisionViewController: UIViewController {
     private var imageView: UIImageView!
     private var prescriptionSlider: UISlider!
     private var prescription: Double = 0
-    private var currentImage: UIImage!
     private var currentPrescriptionLabel: UILabel!
     private var arButton: UIButton!
     private var nextImageButton: UIButton!
     
-    private var width: CGFloat {
-        return self.view.frame.width
-    }
-    private var height: CGFloat {
-        return self.view.frame.height
-    }
+    private var displayImages: [UIImage] = []
+    private var currentImageIndex: Int = 0
+
+    private var width: CGFloat!
+    private var height: CGFloat!
     var baseView: UIView!
 
     override func loadView() {
+        displayImages = [UIImage(named: "applepark.jpg")!, UIImage(named: "wwdc.jpg")!, UIImage(named: "poster.jpg")!]
         let view = UIView(frame: CGRect(x: 0, y: 0, width: 500, height: 500))
         view.backgroundColor = UIColor.white
         self.view = view
@@ -30,17 +29,18 @@ class VisionViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
+        width = self.view.frame.width
+        height = self.view.frame.height
         imageView = UIImageView(frame: CGRect(x: 0, y: 0, width: width, height: height))
         imageView.frame
         view.frame
         view.addSubview(imageView)
-        currentImage = UIImage(named: "vision")
-        displayImage(currentImage, prescription: 0)
+
+        displayImage(UIImage(named: "wwdc.jpg")!, prescription: 0)
         
         initControlBackground()
         initSlider()
@@ -54,7 +54,7 @@ class VisionViewController: UIViewController {
     private func displayImage(_ image: UIImage, prescription: Double) {
         let largeImage = image
         let heightRatio = largeImage.size.height / largeImage.size.width
-        guard let resizedImage = largeImage.withSize(targetSize: CGSize(width: width, height: heightRatio * width)) else { return }
+        guard let resizedImage = largeImage.withSize(targetSize: CGSize(width: 2 * width, height: 2 * heightRatio * width)) else { return }
         let prescriptionImage = resizedImage.withPrescription(perscription: prescription, original: resizedImage.size)
         imageView.image = prescriptionImage
         imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight, .flexibleBottomMargin, .flexibleRightMargin, .flexibleLeftMargin, .flexibleTopMargin]
@@ -86,7 +86,7 @@ class VisionViewController: UIViewController {
         prescriptionSlider.maximumTrackTintColor = UIColor.darkGray
         prescriptionSlider.transform = CGAffineTransform(scaleX: 0.666, y: 0.666)
         prescriptionSlider.addTarget(self, action: #selector(updatePrescription(sender:)), for: .valueChanged)
-        self.view.addSubview(prescriptionSlider)
+        view.addSubview(prescriptionSlider)
     }
 
     private func initLabel() {
@@ -120,7 +120,8 @@ class VisionViewController: UIViewController {
     }
     
     @objc func nextImage() {
-        print("next image")
+        currentImageIndex = (currentImageIndex + 1) % displayImages.count
+        displayImage(displayImages[currentImageIndex], prescription: prescription)
     }
     
     @objc func updatePrescription(sender: UISlider) {
@@ -128,7 +129,7 @@ class VisionViewController: UIViewController {
         let when = DispatchTime.now() + 0.1
         DispatchQueue.main.asyncAfter(deadline: when) {
             if self.prescription == Double(sender.value) {
-                self.displayImage(self.currentImage, prescription: self.prescription)
+                self.displayImage(self.displayImages[self.currentImageIndex], prescription: self.prescription)
                 self.currentPrescriptionLabel.attributedText = stringForPrescription(prescription: self.prescription)
             }
         }
