@@ -69,36 +69,6 @@ extension UIImage {
         return image
     }
     
-//    /// Resize the image
-//    ///
-//    /// - Parameter targetSize: the new size
-//    /// - Returns: returns the new image
-//    open func withSize(targetSize: CGSize) -> UIImage? {
-//        let size = self.size
-//
-//        let widthRatio  = targetSize.width  / size.width
-//        let heightRatio = targetSize.height / size.height
-//
-//        // Figure out what our orientation is, and use that to form the rectangle
-//        var newSize: CGSize
-//        if(widthRatio > heightRatio) {
-//            newSize = CGSize(width: size.width * heightRatio, height: size.height * heightRatio)
-//        } else {
-//            newSize = CGSize(width: size.width * widthRatio, height: size.height * widthRatio)
-//        }
-//
-//        // This is the rect that we've calculated out and this is what is actually used below
-//        let rect = CGRect(x: 0, y: 0, width: newSize.width, height: newSize.height)
-//
-//        // Actually do the resizing to the rect using the ImageContext stuff
-//        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-//        self.draw(in: rect)
-//        let newImage = UIGraphicsGetImageFromCurrentImageContext()
-//        UIGraphicsEndImageContext()
-//
-//        return newImage
-//    }
-    
     /// Resize the image with the given perscription
     ///
     /// - Parameter perscription: perscription
@@ -107,7 +77,6 @@ extension UIImage {
         let ratio = sizeRatio(for: perscription)
         let newSize = CGSize(width: original.width * ratio, height: original.height * ratio)
         return self.withSize(newSize: newSize)
-//        return self.withSize(targetSize: newSize)
     }
 }
 
@@ -124,7 +93,7 @@ func sizeRatio(for prescription: Double) -> CGFloat {
 ///
 /// - Parameter prescription: prescription
 /// - Returns: ratio
-func distanceRatio(for prescription: Double) -> Double {
+public func distanceRatio(for prescription: Double) -> Double {
     if prescription < 0.5 {
         return 1
     } else if prescription < 2.5 {
@@ -135,6 +104,35 @@ func distanceRatio(for prescription: Double) -> Double {
         return 12 * prescription - 33
     }
 }
+
+/// return sigma value for blur
+///
+/// - Parameter prescription: prescription
+/// - Returns: sigma
+public func blurForPrescription(_ prescription: Double) -> Double {
+    return sqrt(distanceRatio(for: prescription))
+}
+
+/// Created attributed string for prescription label (highlight value)
+///
+/// - Parameter prescription: prescription
+/// - Returns: the attributed string
+public func stringForPrescription(prescription: Double) -> NSAttributedString {
+    let prescriptionValue = String(format: "%.1f", prescription)
+    let baseAttrs: [NSAttributedString.Key: Any] = [ NSAttributedString.Key.foregroundColor: offwhiteColor, NSAttributedString.Key.font: UIFont(name: "Avenir-Medium", size: 16)! ]
+    let attrString = NSMutableAttributedString(string: "prescription: " + prescriptionValue, attributes: baseAttrs)
+    let range = NSRange(location: 0, length: 13)
+    let lowerOpacity = [NSAttributedString.Key.foregroundColor: offwhiteColor.withAlphaComponent(0.7), NSAttributedString.Key.font: UIFont(name: "Avenir-Book", size: 16)!]
+    attrString.addAttributes(lowerOpacity, range: range)
+    return attrString
+}
+
+public func convert(cmage: CIImage) -> UIImage? {
+    let context = CIContext(options: nil)
+    guard let cgImage = context.createCGImage(cmage, from: cmage.extent, format: CIFormat.RGBAh, colorSpace: nil) else { return nil }
+    return UIImage(cgImage: cgImage)
+}
+
 
 extension UIColor {
     convenience init(red: Int, green: Int, blue: Int) {
