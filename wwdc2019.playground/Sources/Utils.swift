@@ -1,4 +1,5 @@
 import UIKit
+import AVFoundation
 
 struct Constants {
     
@@ -56,35 +57,47 @@ extension UIImage {
         return image?.withRenderingMode(.alwaysOriginal)
     }
     
-    /// Resize the image
+    /// resize image
     ///
-    /// - Parameter targetSize: the new size
-    /// - Returns: returns the new image
-    open func withSize(targetSize: CGSize) -> UIImage? {
-        let size = self.size
-        
-        let widthRatio  = targetSize.width  / size.width
-        let heightRatio = targetSize.height / size.height
-        
-        // Figure out what our orientation is, and use that to form the rectangle
-        var newSize: CGSize
-        if(widthRatio > heightRatio) {
-            newSize = CGSize(width: size.width * heightRatio, height: size.height * heightRatio)
-        } else {
-            newSize = CGSize(width: size.width * widthRatio, height: size.height * widthRatio)
+    /// - Parameter newSize: new size
+    /// - Returns: image resized
+    open func withSize(newSize: CGSize) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        let image = renderer.image { _ in
+            self.draw(in: CGRect.init(origin: CGPoint.zero, size: newSize))
         }
-        
-        // This is the rect that we've calculated out and this is what is actually used below
-        let rect = CGRect(x: 0, y: 0, width: newSize.width, height: newSize.height)
-        
-        // Actually do the resizing to the rect using the ImageContext stuff
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-        self.draw(in: rect)
-        let newImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        return newImage
+        return image
     }
+    
+//    /// Resize the image
+//    ///
+//    /// - Parameter targetSize: the new size
+//    /// - Returns: returns the new image
+//    open func withSize(targetSize: CGSize) -> UIImage? {
+//        let size = self.size
+//
+//        let widthRatio  = targetSize.width  / size.width
+//        let heightRatio = targetSize.height / size.height
+//
+//        // Figure out what our orientation is, and use that to form the rectangle
+//        var newSize: CGSize
+//        if(widthRatio > heightRatio) {
+//            newSize = CGSize(width: size.width * heightRatio, height: size.height * heightRatio)
+//        } else {
+//            newSize = CGSize(width: size.width * widthRatio, height: size.height * widthRatio)
+//        }
+//
+//        // This is the rect that we've calculated out and this is what is actually used below
+//        let rect = CGRect(x: 0, y: 0, width: newSize.width, height: newSize.height)
+//
+//        // Actually do the resizing to the rect using the ImageContext stuff
+//        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+//        self.draw(in: rect)
+//        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+//        UIGraphicsEndImageContext()
+//
+//        return newImage
+//    }
     
     /// Resize the image with the given perscription
     ///
@@ -93,7 +106,8 @@ extension UIImage {
     open func withPrescription(perscription: Double, original: CGSize) -> UIImage? {
         let ratio = sizeRatio(for: perscription)
         let newSize = CGSize(width: original.width * ratio, height: original.height * ratio)
-        return self.withSize(targetSize: newSize)
+        return self.withSize(newSize: newSize)
+//        return self.withSize(targetSize: newSize)
     }
 }
 
@@ -137,5 +151,23 @@ extension UIColor {
             green: (rgb >> 8) & 0xFF,
             blue: rgb & 0xFF
         )
+    }
+}
+
+extension UIScreen {
+    open var orientation: UIDeviceOrientation {
+        let point = coordinateSpace.convert(CGPoint.zero, to: fixedCoordinateSpace)
+        switch (point.x, point.y) {
+        case (0, 0):
+            return .portrait
+        case let (x, y) where x != 0 && y != 0:
+            return .portraitUpsideDown
+        case let (0, y) where y != 0:
+            return .landscapeLeft
+        case let (x, 0) where x != 0:
+            return .landscapeRight
+        default:
+            return .unknown
+        }
     }
 }
