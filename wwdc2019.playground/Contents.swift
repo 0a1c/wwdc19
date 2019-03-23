@@ -58,7 +58,7 @@ class VisionViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         initLabel()
         initButtons()
         
-        displayImage(displayImages[currentImageIndex], prescription: prescription)
+        displayImage(image: displayImages[currentImageIndex])
     }
     
     /// update frames for all ui elements
@@ -83,21 +83,54 @@ class VisionViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         imageView.frame = CGRect(x: 0, y: 0, width: width, height: height)
     }
     
-    /// Displays the given image
+    /// Display the image
     ///
-    /// - Parameter largeImage: image to display
-    private func displayImage(_ image: UIImage, prescription: Double) {
-        guard let ciimage = CIImage(image: image) else { return }
-        let largeImage = image
-        let heightRatio = largeImage.size.height / largeImage.size.width
-        let resizedImage = largeImage.withSize(newSize: CGSize(width: 2 * width, height: 2 * heightRatio * width))
-        let prescriptionImage = resizedImage.withPrescription(perscription: prescription, original: resizedImage.size)
-        imageView.image = prescriptionImage
+    /// - Parameters:
+    ///   - ciimage: ciimage input
+    ///   - prescription: prescription
+    private func displayImage(ciimage: CIImage) {
+        // Added "CIAffineClamp" filter
+        let blurRadius = blurForPrescription(self.prescription)
+        let affineClampFilter = CIFilter(name: "CIAffineClamp")!
+        affineClampFilter.setDefaults()
+        affineClampFilter.setValue(ciimage, forKey: kCIInputImageKey)
+        let resultClamp = affineClampFilter.value(forKey: kCIOutputImageKey)
+        
+        // resultClamp is used as input for "CIGaussianBlur" filter
+        let filter: CIFilter = CIFilter(name:"CIGaussianBlur")!
+        filter.setDefaults()
+        filter.setValue(resultClamp, forKey: kCIInputImageKey)
+        filter.setValue(blurRadius, forKey: kCIInputRadiusKey)
+        
+        let ciContext = CIContext(options: nil)
+        guard let result = filter.value(forKey: kCIOutputImageKey) as? CIImage else { return }
+        guard let cgImage = ciContext.createCGImage(result, from: ciimage.extent, format: CIFormat.RGBAh, colorSpace: nil) else { return }
+        
+        let image = UIImage(cgImage: cgImage)
+        DispatchQueue.main.async {
+            self.imageView.image = image
+        }
     }
     
+    private func displayImage(image: UIImage) {
+        guard let ciimage = CIImage(image: image) else { return }
+        displayImage(ciimage: ciimage)
+//        let largeImage = image
+//        let heightRatio = largeImage.size.height / largeImage.size.width
+//        let resizedImage = largeImage.withSize(newSize: CGSize(width: 2 * width, height: 2 * heightRatio * width))
+//        let prescriptionImage = resizedImage.withPrescription(perscription: prescription, original: resizedImage.size)
+//        imageView.image = prescriptionImage
+    }
+    
+//    /// Displays the given image
+//    ///
+//    /// - Parameter largeImage: image to display
+//    private func displayImage(image: UIImage) {
+//        guard let ciimage = CIImage(image: image) else { return }
+//        displayImage(ciimage: ciimage)
+//    }
+    
     private func initControlBackground() {
-//        controlBackground.layer.cornerRadius = 20
-//        controlBackground.layer.masksToBounds = true
         controlBackground.backgroundColor = darkGrayColor
         view.addSubview(controlBackground)
     }
@@ -158,7 +191,7 @@ class VisionViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     @objc func switchToAR() {
         if (displayingAR) {
             cameraSession.stopRunning()
-            displayImage(displayImages[currentImageIndex], prescription: prescription)
+            displayImage(image: displayImages[currentImageIndex])
         } else {
             cameraSession = AVCaptureSession()
             cameraSession.sessionPreset = .low
@@ -174,7 +207,7 @@ class VisionViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     @objc func nextImage() {
         if displayingAR { return }
         currentImageIndex = (currentImageIndex + 1) % displayImages.count
-        displayImage(displayImages[currentImageIndex], prescription: prescription)
+        displayImage(image: displayImages[currentImageIndex])
     }
     
     @objc func updatePrescription(sender: UISlider) {
@@ -186,7 +219,7 @@ class VisionViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         let when = DispatchTime.now() + 0.1
         DispatchQueue.main.asyncAfter(deadline: when) {
             if self.prescription == Double(sender.value) {
-                self.displayImage(self.displayImages[self.currentImageIndex], prescription: self.prescription)
+                self.displayImage(image: self.displayImages[self.currentImageIndex])
             }
         }
     }
@@ -240,9 +273,8 @@ class VisionViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         // do stuff here
         guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-        
         let ciimage = CIImage(cvPixelBuffer: imageBuffer)
-        // Added "CIAffineClamp" filter
+        
         let blurRadius = blurForPrescription(self.prescription)
         let affineClampFilter = CIFilter(name: "CIAffineClamp")!
         affineClampFilter.setDefaults()
@@ -264,7 +296,6 @@ class VisionViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         DispatchQueue.main.async {
             self.imageView.image = image
         }
-        
     }
 }
 

@@ -110,7 +110,7 @@ public func distanceRatio(for prescription: Double) -> Double {
 /// - Parameter prescription: prescription
 /// - Returns: sigma
 public func blurForPrescription(_ prescription: Double) -> Double {
-    return sqrt(distanceRatio(for: prescription))
+    return sqrt((distanceRatio(for: prescription) - 1) / Double.pi)
 }
 
 /// Created attributed string for prescription label (highlight value)
