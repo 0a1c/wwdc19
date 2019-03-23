@@ -129,7 +129,7 @@ public final class VisionViewController: UIViewController, AVCaptureVideoDataOut
     
     /// initialize the slider
     private func initSlider() {
-        prescriptionSlider.maximumValue = 4
+        prescriptionSlider.maximumValue = 6
         prescriptionSlider.minimumValue = 0
         prescriptionSlider.tintColor = offwhiteColor
         prescriptionSlider.value = 0

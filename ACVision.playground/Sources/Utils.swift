@@ -97,8 +97,10 @@ public func distanceRatio(for prescription: Double) -> Double {
         return 1.875 * prescription + 0.25
     } else if prescription < 3.75 {
         return 5.6 * prescription - 9.33
-    } else {
+    } else if prescription <= 4 {
         return 12 * prescription - 33
+    } else {
+        return 5 * prescription - 5
     }
 }
 
