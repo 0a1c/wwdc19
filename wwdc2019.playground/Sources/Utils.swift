@@ -1,9 +1,6 @@
 import UIKit
 import AVFoundation
 
-struct Constants {
-    
-}
 
 public let darkGrayColor = UIColor(rgb: 0x0A0A0A)
 public let offwhiteColor = UIColor(rgb: 0xF0F1EC)
@@ -161,4 +158,10 @@ extension UIScreen {
             return .unknown
         }
     }
+}
+
+public enum Quality {
+    case low
+    case medium
+    case high
 }
