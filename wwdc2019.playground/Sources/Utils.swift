@@ -127,13 +127,6 @@ public func stringForPrescription(prescription: Double) -> NSAttributedString {
     return attrString
 }
 
-public func convert(cmage: CIImage) -> UIImage? {
-    let context = CIContext(options: nil)
-    guard let cgImage = context.createCGImage(cmage, from: cmage.extent, format: CIFormat.RGBAh, colorSpace: nil) else { return nil }
-    return UIImage(cgImage: cgImage)
-}
-
-
 extension UIColor {
     convenience init(red: Int, green: Int, blue: Int) {
         assert(red >= 0 && red <= 255, "Invalid red component")

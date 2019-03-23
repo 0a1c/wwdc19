@@ -87,6 +87,7 @@ class VisionViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     ///
     /// - Parameter largeImage: image to display
     private func displayImage(_ image: UIImage, prescription: Double) {
+        guard let ciimage = CIImage(image: image) else { return }
         let largeImage = image
         let heightRatio = largeImage.size.height / largeImage.size.width
         let resizedImage = largeImage.withSize(newSize: CGSize(width: 2 * width, height: 2 * heightRatio * width))
@@ -171,6 +172,7 @@ class VisionViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     }
     
     @objc func nextImage() {
+        if displayingAR { return }
         currentImageIndex = (currentImageIndex + 1) % displayImages.count
         displayImage(displayImages[currentImageIndex], prescription: prescription)
     }
@@ -237,12 +239,28 @@ class VisionViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         // do stuff here
-        guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-            print("sample buffer not created")
-            return
-        }
-        let ciimage = CIImage(cvPixelBuffer: imageBuffer).applyingGaussianBlur(sigma: blurForPrescription(self.prescription))
-        guard let image: UIImage = convert(cmage: ciimage) else { return }
+        guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        
+        let ciimage = CIImage(cvPixelBuffer: imageBuffer)
+        // Added "CIAffineClamp" filter
+        let blurRadius = blurForPrescription(self.prescription)
+        let affineClampFilter = CIFilter(name: "CIAffineClamp")!
+        affineClampFilter.setDefaults()
+        affineClampFilter.setValue(ciimage, forKey: kCIInputImageKey)
+        let resultClamp = affineClampFilter.value(forKey: kCIOutputImageKey)
+        
+        // resultClamp is used as input for "CIGaussianBlur" filter
+        let filter: CIFilter = CIFilter(name:"CIGaussianBlur")!
+        filter.setDefaults()
+        filter.setValue(resultClamp, forKey: kCIInputImageKey)
+        filter.setValue(blurRadius, forKey: kCIInputRadiusKey)
+        
+        let ciContext = CIContext(options: nil)
+        guard let result = filter.value(forKey: kCIOutputImageKey) as? CIImage else { return }
+        guard let cgImage = ciContext.createCGImage(result, from: ciimage.extent, format: CIFormat.RGBAh, colorSpace: nil) else { return }
+        
+        let image = UIImage(cgImage: cgImage)
+        
         DispatchQueue.main.async {
             self.imageView.image = image
         }
