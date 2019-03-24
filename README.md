@@ -6,3 +6,6 @@ Hey, I'm Anand. In my playground, you can experience seeing the world through di
  Interaction with my playground is simple. Adjust the slider to change the prescription, and press the image button for a new image. Click the camera button to see a live view of the world.
  ## Customization
  Change the quality of the live view for different results. The options are low, medium, and high.
+ ## Demo
+ ![first demo](https://media.giphy.com/media/57UhXDJacuwLpjiRj5/giphy.gif)
+ ![second demo](https://media.giphy.com/media/MTuBPhFS984L05CbxU/giphy.gif)
