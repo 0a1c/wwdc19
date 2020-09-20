@@ -1,5 +1,5 @@
 
-Imperfect Eyesight
+Imperfect Eyesight [Accepted as Scholar]
 =========================
 Hey, I'm Anand. In my playground, you can experience seeing the world through different eyesight prescriptions. You'll see the same things differently, and hopefully you'll learn something new.
  ## Interaction
